@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 // variables
 
 var seatingCapacity = 10
-var arrivalRate = 100 * time.Millisecond
+var arrivalRate = 100
 var cutDuration = 1000 * time.Millisecond
 var timeOpen = 10 * time.Second
 
@@ -40,13 +41,43 @@ func main() {
 
 	// add barbers
 	barbershop.addBarber("Frank")
+	barbershop.addBarber("Bob")
+	barbershop.addBarber("Joe")
+	barbershop.addBarber("Sally")
+	barbershop.addBarber("Sue")
 
-	// start the barbershop
+	// start the barbershop as a go routine
+
+	shopClosing := make(chan bool)
+	closed := make(chan bool)
+
+	go func() {
+		<-time.After(timeOpen)
+		shopClosing <- true
+		barbershop.closeShopForTheDay()
+		closed <- true
+
+	}()
 
 	// add customers
+	i := 1
+	go func() {
+		for {
+			// get a random number with average arrival rate
+			randomMilliseconds := rand.Int() % (2 * arrivalRate)
+
+			select {
+			case <-shopClosing:
+				return
+			case <-time.After(time.Millisecond * time.Duration(randomMilliseconds)):
+				barbershop.addCustomer(fmt.Sprintf("Customer %d", i))
+				i++
+			}
+		}
+	}()
 
 	// block until barbershop is closed
-	time.Sleep(5 * time.Second)
-
+	<-closed
 	// print goodbye message
+	color.Yellow("Barbershop is closed!")
 }
