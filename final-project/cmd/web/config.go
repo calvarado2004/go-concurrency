@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"github.com/alexedwards/scs/v2"
+	"github.com/calvarado2004/go-concurrency/data"
 	"log"
 	"sync"
 )
@@ -13,4 +14,5 @@ type Config struct {
 	InfoLog  *log.Logger
 	ErrorLog *log.Logger
 	Wait     *sync.WaitGroup
+	Models   data.Models
 }

@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"github.com/alexedwards/scs/redisstore"
 	"github.com/alexedwards/scs/v2"
+	"github.com/calvarado2004/go-concurrency/data"
 	"github.com/gomodule/redigo/redis"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	_ "github.com/jackc/pgconn"
@@ -42,9 +45,13 @@ func main() {
 		Wait:     &wg,
 		InfoLog:  infoLog,
 		ErrorLog: errorLog,
+		Models:   data.New(db),
 	}
 
 	// set up email
+
+	// listen for signals
+	go app.listenForShutdown()
 
 	// listen for web connections
 	app.serve()
@@ -142,4 +149,26 @@ func initRedis() *redis.Pool {
 	}
 
 	return redisPool
+}
+
+func (app *Config) listenForShutdown() {
+
+	// listen for shutdown signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	app.Shutdown()
+	os.Exit(0)
+
+}
+
+func (app *Config) Shutdown() {
+	app.InfoLog.Println("Shutting down the server")
+
+	// block until cleanup is complete
+	app.Wait.Wait()
+
+	app.InfoLog.Println("Server shutdown complete, closing channels...")
+
 }
