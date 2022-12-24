@@ -174,3 +174,4 @@ func (app *Config) Shutdown() {
 	app.InfoLog.Println("Server shutdown complete, closing channels...")
 
 }
+
