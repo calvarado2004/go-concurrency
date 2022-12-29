@@ -1,6 +1,12 @@
 BINARY_NAME=myapp
 DSN="host=localhost port=5432 user=postgres password=password dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5"
 REDIS="127.0.0.1:6379"
+DOMAIN="localhost"
+MAIL_HOST="localhost"
+MAIL_PORT=1025
+MAIL_FROM_ADDRESS="noreply@localhost"
+MAIL_FROM_NAME="MyApp"
+MAIL_ENCRYPTION="none"
 
 ## build: Build binary
 build:
@@ -11,7 +17,7 @@ build:
 ## run: builds and runs the application
 run: build
 	@echo "Starting..."
-	@env DSN=${DSN} REDIS=${REDIS} ./${BINARY_NAME} &
+	@env DSN=${DSN} REDIS=${REDIS} MAIL_HOST=${MAIL_HOST} MAIL_PORT=${MAIL_PORT} MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS} MAIL_FROM_NAME=${MAIL_FROM_NAME} MAIL_ENCRYPTION=${MAIL_ENCRYPTION} ./${BINARY_NAME} &
 	@echo "Started!"
 
 ## clean: runs go clean and deletes binaries

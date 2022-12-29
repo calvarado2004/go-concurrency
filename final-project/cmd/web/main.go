@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -50,6 +51,9 @@ func main() {
 	}
 
 	// set up email
+	app.Mailer = app.CreateMail()
+
+	go app.listenForMail()
 
 	// listen for signals
 	go app.listenForShutdown()
@@ -160,18 +164,47 @@ func (app *Config) listenForShutdown() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	app.Shutdown()
+	app.shutdown()
 	os.Exit(0)
 
 }
 
-func (app *Config) Shutdown() {
+func (app *Config) shutdown() {
 	app.InfoLog.Println("Shutting down the server")
 
 	// block until cleanup is complete
 	app.Wait.Wait()
 
+	// close the channel
+	app.Mailer.DoneChan <- true
+
 	app.InfoLog.Println("Server shutdown complete, closing channels...")
 
+	close(app.Mailer.ErrorChan)
+	close(app.Mailer.DoneChan)
+	close(app.Mailer.MailerChan)
 }
 
+func (app *Config) CreateMail() Mail {
+
+	errorChan := make(chan error)
+	mailerChan := make(chan Message, 100)
+	mailerDoneChan := make(chan bool)
+
+	mailPort, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
+
+	m := Mail{
+		Domain:      os.Getenv("DOMAIN"),
+		Host:        os.Getenv("MAIL_HOST"),
+		Port:        mailPort,
+		Encryption:  os.Getenv("MAIL_ENCRYPTION"),
+		FromAddress: os.Getenv("MAIL_FROM_ADDRESS"),
+		FromName:    os.Getenv("MAIL_FROM_NAME"),
+		Wait:        app.Wait,
+		ErrorChan:   errorChan,
+		MailerChan:  mailerChan,
+		DoneChan:    mailerDoneChan,
+	}
+
+	return m
+}
