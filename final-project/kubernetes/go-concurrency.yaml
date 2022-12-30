@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: go-concurrency
+  name: go-concurrency
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-concurrency
+  template:
+    metadata:
+      labels:
+        app: go-concurrency
+    spec:
+      containers:
+      - image: calvarado2004/go-concurrency:latest
+        name: go-concurrency
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MAIL_HOST
+          value: "mailhog-svc"
+        - name: MAIL_PORT
+          value: "1025"
+        - name: DSN
+          value: "host=postgres-svc port=5432 user=postgres password=testpassword dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5"
+        - name: REDIS
+          value: "redis-svc:6379"
+        - name: DOMAIN
+          value: "go-concurrency.apps.okd.calvarado04.com"
+        - name: MAIL_FROM_ADDRESS
+          value: "noreply@calvarado04.com"
+        - name: MAIL_FROM_NAME
+          value: "admin"
+        - name: MAIL_ENCRYPTION
+          value: "none"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-concurrency-svc
+  namespace: go-concurrency
+spec:
+  selector:
+    app: go-concurrency
+  ports:
+  - port: 8080
+    targetPort: 8080

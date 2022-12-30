@@ -1,0 +1,55 @@
+# For OpenShift, add privileged SCC to the service account
+# oc adm policy add-scc-to-user privileged -z default -n go-concurrency
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: go-concurrency
+spec:
+  serviceName: postgresql-service
+  selector:
+    matchLabels:
+      app: postgresql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+        - name: postgresql
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+          image: postgres:14.5
+          env:
+            - name: POSTGRES_PASSWORD
+              value: testpassword
+            - name: PGDATA
+              value: /data/pgdata
+            - name: POSTGRES_DB
+              value: concurrency
+          volumeMounts:
+            - name: data
+              mountPath: /data/pgdata
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: portworx-db-sc
+        resources:
+          requests:
+            storage: "5Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-svc
+  namespace: go-concurrency
+spec:
+  selector:
+    app: postgresql
+  ports:
+  - port: 5432
+    targetPort: 5432

@@ -1,0 +1,66 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-vol
+  namespace: go-concurrency
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+  storageClassName: portworx-db-sc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+  name: redis
+  namespace: go-concurrency
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis:alpine
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+        name: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 300m
+            memory: 500Mi
+        ports:
+          - name: http
+            containerPort: 6379
+            protocol: TCP
+        volumeMounts:
+          - name: redis-data
+            mountPath: /data
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-vol    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  namespace: go-concurrency
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379

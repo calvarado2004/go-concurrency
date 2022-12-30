@@ -1,0 +1,74 @@
+# For OpenShift, add privileged SCC to the service account
+# oc adm policy add-scc-to-user privileged -z default -n go-concurrency
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailhog
+  namespace: go-concurrency
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      id: mailhog
+  template:
+    metadata:
+      labels:
+        id: mailhog
+    spec:
+      containers:
+      - name: mailhog
+        image: mailhog/mailhog
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 7
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        ports:
+          - name: http
+            containerPort: 8025
+            protocol: TCP
+          - name: mail
+            containerPort: 1025
+            protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailhog-svc
+  namespace: go-concurrency
+spec:
+  sessionAffinity: None
+  ports:
+    - name: http
+      port: 8025
+      targetPort: 8025
+      protocol: TCP
+    - name: mail
+      port: 1025
+      targetPort: 1025
+      protocol: TCP
+  selector:
+    id: mailhog

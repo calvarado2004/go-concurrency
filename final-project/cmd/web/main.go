@@ -4,10 +4,6 @@ import (
 	"database/sql"
 	"encoding/gob"
 	"fmt"
-	"github.com/alexedwards/scs/redisstore"
-	"github.com/alexedwards/scs/v2"
-	"github.com/calvarado2004/go-concurrency/data"
-	"github.com/gomodule/redigo/redis"
 	"log"
 	"net/http"
 	"os"
@@ -17,12 +13,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexedwards/scs/redisstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/calvarado2004/go-concurrency/data"
+	"github.com/gomodule/redigo/redis"
+
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-const webPort = "80"
+const webPort = "8080"
 
 func main() {
 	// connect to the database
