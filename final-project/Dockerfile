@@ -2,7 +2,7 @@ FROM docker.io/bitnami/golang:1.19 AS builder
 ADD ./ /app
 
 WORKDIR /app
-RUN rm go.mod && go mod init github.com/calvarado2004/go-concurrency && go mod tidy && go get github.com/alexedwards/scs/v2  && go get github.com/xhit/go-simple-mail/v2 && go get github.com/jackc/pgconn && go get github.com/jackc/pgx/v4 && go get github.com/go-chi/chi/v5 
+RUN rm go.mod && go mod init github.com/calvarado2004/go-concurrency && go mod tidy && go get github.com/alexedwards/scs/v2  && go get github.com/xhit/go-simple-mail/v2 && go get github.com/jackc/pgconn && go get github.com/jackc/pgx/v4 && go get github.com/go-chi/chi/v5 && go get github.com/bwmarrin/go-alone
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o mailconcurrent cmd/web/*.go
 

@@ -1,6 +1,12 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"github.com/calvarado2004/go-concurrency/data"
+	"html/template"
+	"net/http"
+	"os"
+)
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
 
@@ -82,10 +88,47 @@ func (app *Config) RegisterPage(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 
+	err := r.ParseForm()
+	if err != nil {
+		app.ErrorLog.Println(err)
+	}
+
+	// TODO - validate data
+
 	// create a user
+	user := data.User{
+		Email:     r.Form.Get("email"),
+		FirstName: r.Form.Get("first-name"),
+		LastName:  r.Form.Get("last-name"),
+		Password:  r.Form.Get("password"),
+		Active:    0,
+		IsAdmin:   0,
+	}
+
+	// insert user into db
+	_, err = user.Insert(user)
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Failed to create user")
+		app.InfoLog.Println(err)
+		http.Redirect(w, r, "/register", http.StatusSeeOther)
+	}
 
 	// send an activation email
+	url := fmt.Sprintf("http://%s/activate?email=%s", os.Getenv("DOMAIN"), user.Email)
 
+	signedURL := GenerateTokenFromString(url)
+	app.InfoLog.Println(signedURL)
+
+	msg := Message{
+		To:       user.Email,
+		Subject:  "Activate your account",
+		Template: "confirmation-email",
+		Data:     template.HTML(signedURL),
+	}
+
+	app.sendEmail(msg)
+
+	app.Session.Put(r.Context(), "flash", "You've been registered successfully")
 	// subscribe the user to an account
 
 }
@@ -93,6 +136,34 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 
 	// validate url
+	url := r.RequestURI
+	testURL := fmt.Sprintf("http://%s/%s", os.Getenv("DOMAIN"), url)
+	okay := VerifyToken(testURL)
+
+	if !okay {
+		app.Session.Put(r.Context(), "error", "Invalid token")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// activate the user
+	user, err := app.Models.User.GetByEmail(r.URL.Query().Get("email"))
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "No user found")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	user.Active = 1
+	err = user.Update()
+	if err != nil {
+		app.Session.Put(r.Context(), "error", "Failed to activate user")
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	app.Session.Put(r.Context(), "flash", "Your account has been activated")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 
 	// generate an invoice
 
