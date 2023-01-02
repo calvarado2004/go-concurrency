@@ -114,7 +114,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// send an activation email
-	url := fmt.Sprintf("http://%s/activate?email=%s", os.Getenv("DOMAIN"), user.Email)
+	url := fmt.Sprintf("%s/activate?email=%s", os.Getenv("DOMAIN"), user.Email)
 
 	signedURL := GenerateTokenFromString(url)
 	app.InfoLog.Println(signedURL)
@@ -137,7 +137,7 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 
 	// validate url
 	url := r.RequestURI
-	testURL := fmt.Sprintf("http://%s/%s", os.Getenv("DOMAIN"), url)
+	testURL := fmt.Sprintf("%s%s", os.Getenv("DOMAIN"), url)
 	okay := VerifyToken(testURL)
 
 	if !okay {

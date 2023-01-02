@@ -29,7 +29,7 @@ spec:
         - name: REDIS
           value: "redis-svc:6379"
         - name: DOMAIN
-          value: "go-concurrency-go-concurrency.apps.okd.calvarado04.com"
+          value: "https://go-concurrency-go-concurrency.apps.okd.calvarado04.com"
         - name: MAIL_FROM_ADDRESS
           value: "noreply@calvarado04.com"
         - name: MAIL_FROM_NAME

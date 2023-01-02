@@ -110,7 +110,7 @@ func connectToDB() *sql.DB {
 		}
 
 		log.Printf("Backing off and trying again")
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		counts++
 		continue
 

@@ -1,7 +1,7 @@
 BINARY_NAME=myapp
 DSN="host=localhost port=5432 user=postgres password=password dbname=concurrency sslmode=disable timezone=UTC connect_timeout=5"
 REDIS="127.0.0.1:6379"
-DOMAIN="localhost:8080"
+DOMAIN="http://localhost:8080"
 MAIL_HOST="localhost"
 MAIL_PORT=1025
 MAIL_FROM_ADDRESS="noreply@localhost"
