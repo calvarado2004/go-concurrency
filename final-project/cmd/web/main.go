@@ -26,8 +26,6 @@ import (
 const webPort = "8080"
 
 func main() {
-	// connect to the database
-	db := initDB()
 
 	// create web sessions
 	session := initSession()
@@ -35,19 +33,31 @@ func main() {
 	// create loggers
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	panicLog := log.New(os.Stderr, "PANIC\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// set up application config just for logging
+	app := Config{
+		InfoLog:  infoLog,
+		ErrorLog: errorLog,
+		PanicLog: panicLog,
+	}
+
+	// connect to the database
+	db := initDB(&app)
 
 	// create channels
 
 	// create wait group
 	wg := sync.WaitGroup{}
 
-	// set up application config
-	app := Config{
+	// set up application config, including db and wait group
+	app = Config{
 		Session:       session,
 		DB:            db,
 		Wait:          &wg,
 		InfoLog:       infoLog,
 		ErrorLog:      errorLog,
+		PanicLog:      panicLog,
 		Models:        data.New(db),
 		ErrorChan:     make(chan error),
 		ErrorChanDone: make(chan bool),
@@ -96,17 +106,18 @@ func (app *Config) serve() {
 
 }
 
-func initDB() *sql.DB {
+func initDB(app *Config) *sql.DB {
+
 	// connect to the database
-	conn := connectToDB()
+	conn := connectToDB(app)
 	if conn == nil {
-		log.Panic("Could not connect to the database")
+		app.PanicLog.Println("We could not connect to the database after 10 attempts")
 	}
 
 	return conn
 }
 
-func connectToDB() *sql.DB {
+func connectToDB(app *Config) *sql.DB {
 	// connect to the database
 	counts := 0
 
@@ -115,9 +126,9 @@ func connectToDB() *sql.DB {
 	for {
 		connection, err := openDB(dsn)
 		if err != nil {
-			log.Printf("Could not connect to the database: %s", err)
+			app.ErrorLog.Println("Could not connect to the database: %s", err)
 		} else {
-			log.Printf("Connected to the database")
+			app.InfoLog.Println("Connected to the database successfully!")
 			return connection
 		}
 
@@ -125,8 +136,8 @@ func connectToDB() *sql.DB {
 			return nil
 		}
 
-		log.Printf("Backing off and trying again")
-		time.Sleep(2 * time.Second)
+		app.InfoLog.Println("Retrying in 3 seconds...")
+		time.Sleep(3 * time.Second)
 		counts++
 		continue
 

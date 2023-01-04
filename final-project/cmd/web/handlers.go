@@ -249,7 +249,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 		//test app error chan
 
-		app.ErrorChan <- errors.New("some custom error")
+		app.ErrorChan <- errors.New("some custom error sent to error chan")
 	}()
 
 	// subscribe the user to the plan
