@@ -126,7 +126,7 @@ func connectToDB(app *Config) *sql.DB {
 	for {
 		connection, err := openDB(dsn)
 		if err != nil {
-			app.ErrorLog.Println("Could not connect to the database: %s", err)
+			app.ErrorLog.Println("Could not connect to the database:", err)
 		} else {
 			app.InfoLog.Println("Connected to the database successfully!")
 			return connection
