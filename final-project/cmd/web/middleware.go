@@ -7,14 +7,16 @@ func (app *Config) SessionLoad(next http.Handler) http.Handler {
 }
 
 func (app *Config) Auth(next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !app.Session.Exists(r.Context(), "authenticatedUserID") {
+		if !app.Session.Exists(r.Context(), "userID") {
 			app.Session.Put(r.Context(), "error", "Log in first!")
+			app.InfoLog.Println("User is not authenticated, middleware")
 			http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
-	
+
 }
