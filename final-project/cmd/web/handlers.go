@@ -171,3 +171,26 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 
 	// send an email with the invoice attached
 }
+
+func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
+
+	if !app.Session.Exists(r.Context(), "userID") {
+		app.Session.Put(r.Context(), "error", "Please login first")
+		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
+		return
+	}
+
+	plans, err := app.Models.Plan.GetAll()
+	if err != nil {
+		app.ErrorLog.Println(err)
+	}
+
+	dataMap := make(map[string]any)
+
+	dataMap["plans"] = plans
+
+	app.render(w, r, "plans.page.gohtml", &TemplateData{
+		Data: dataMap,
+	})
+
+}
