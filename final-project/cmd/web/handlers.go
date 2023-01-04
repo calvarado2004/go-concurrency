@@ -191,12 +191,6 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) ChooseSubscription(w http.ResponseWriter, r *http.Request) {
 
-	if !app.Session.Exists(r.Context(), "userID") {
-		app.Session.Put(r.Context(), "error", "Please login first")
-		http.Redirect(w, r, "/login", http.StatusTemporaryRedirect)
-		return
-	}
-
 	plans, err := app.Models.Plan.GetAll()
 	if err != nil {
 		app.ErrorLog.Println(err)
