@@ -7,7 +7,6 @@ import (
 	"github.com/phpdave11/gofpdf"
 	"github.com/phpdave11/gofpdf/contrib/gofpdi"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -185,7 +184,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("plan id", planID)
+	app.InfoLog.Println("Plan id is", planID)
 
 	// get the plan from the db
 	plan, err := app.Models.Plan.GetOne(planID)
@@ -231,7 +230,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 		pdf := app.generateManual(user, plan)
 
-		err := pdf.OutputFileAndClose(fmt.Sprintf("./tmp/%d_manual.pdf", user.ID))
+		err := pdf.OutputFileAndClose(fmt.Sprintf("/tmp/%d_manual.pdf", user.ID))
 		if err != nil {
 			app.ErrorChan <- err
 		}
@@ -242,7 +241,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 			Template: "manual",
 			Data:     "Yous user manual is attached",
 			AttachmentMap: map[string]string{
-				"Manual.pdf": fmt.Sprintf("./tmp/%d_manual.pdf", user.ID),
+				"Manual.pdf": fmt.Sprintf("/tmp/%d_manual.pdf", user.ID),
 			},
 		}
 
