@@ -7,6 +7,8 @@ type UserInterface interface {
 	Insert(user User) (int, error)
 	ResetPassword(password string) error
 	PasswordMatches(plainText string) (bool, error)
+	Update(user User) error
+	DeleteByID(id int) error
 }
 
 type PlanInterface interface {

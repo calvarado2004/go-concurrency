@@ -92,7 +92,7 @@ func (u *UserTest) GetOne(id int) (*User, error) {
 	return &user, nil
 }
 
-func (u *UserTest) Update() error {
+func (u *UserTest) Update(user User) error {
 
 	return nil
 }

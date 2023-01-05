@@ -47,7 +47,7 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check password
-	validPassword, err := user.PasswordMatches(password)
+	validPassword, err := app.Models.User.PasswordMatches(password)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid login credentials")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -111,7 +111,7 @@ func (app *Config) PostRegisterPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// insert user into db
-	_, err = user.Insert(user)
+	_, err = app.Models.User.Insert(user)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Failed to create user")
 		app.InfoLog.Println(err)
@@ -160,7 +160,7 @@ func (app *Config) ActivateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Active = 1
-	err = user.Update()
+	err = app.Models.User.Update(*user)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Failed to activate user")
 		http.Redirect(w, r, "/", http.StatusSeeOther)
