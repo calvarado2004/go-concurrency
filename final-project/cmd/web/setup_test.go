@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/gob"
 	"github.com/calvarado2004/go-concurrency/data"
+	"golang.org/x/net/context"
 	"log"
 	"net/http"
 	"os"
@@ -68,4 +69,14 @@ func TestMain(m *testing.M) {
 	}()
 
 	os.Exit(m.Run())
+}
+
+func getContext(req *http.Request) context.Context {
+
+	ctx, err := testApp.Session.Load(req.Context(), req.Header.Get("X-Session"))
+	if err != nil {
+		testApp.ErrorLog.Println(err)
+	}
+
+	return ctx
 }
