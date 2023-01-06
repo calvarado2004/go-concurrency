@@ -13,6 +13,10 @@ import (
 	"time"
 )
 
+var pathToManual = "./pdf"
+
+var tmpPath = "/tmp"
+
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
 
 	app.render(w, r, "home.page.gohtml", nil)
@@ -42,14 +46,18 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 	user, err := app.Models.User.GetByEmail(email)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid login credentials")
+		app.InfoLog.Println(err)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
+	app.Session.Put(r.Context(), "userID", user.ID)
+
 	// check password
-	validPassword, err := app.Models.User.PasswordMatches(password)
+	validPassword, err := user.PasswordMatches(password)
 	if err != nil {
 		app.Session.Put(r.Context(), "error", "Invalid login credentials")
+		app.InfoLog.Println(err)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
@@ -62,6 +70,10 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 		}
 		app.sendEmail(msg)
 		app.Session.Put(r.Context(), "error", "Invalid login credentials")
+		err = app.Session.Destroy(r.Context())
+		if err != nil {
+			app.ErrorLog.Println(err)
+		}
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
@@ -230,7 +242,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 		pdf := app.generateManual(user, plan)
 
-		err := pdf.OutputFileAndClose(fmt.Sprintf("/tmp/%d_manual.pdf", user.ID))
+		err := pdf.OutputFileAndClose(fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID))
 		if err != nil {
 			app.ErrorChan <- err
 		}
@@ -241,7 +253,7 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 			Template: "manual",
 			Data:     "Yous user manual is attached",
 			AttachmentMap: map[string]string{
-				"Manual.pdf": fmt.Sprintf("/tmp/%d_manual.pdf", user.ID),
+				"Manual.pdf": fmt.Sprintf("%s/%d_manual.pdf", tmpPath, user.ID),
 			},
 		}
 
@@ -294,7 +306,7 @@ func (app *Config) generateManual(user data.User, plan *data.Plan) *gofpdf.Fpdf 
 
 	time.Sleep(3 * time.Second)
 
-	templatePDF := importer.ImportPage(pdf, "pdf/manual.pdf", 1, "/MediaBox")
+	templatePDF := importer.ImportPage(pdf, fmt.Sprintf("%s/manual.pdf", pathToManual), 1, "/MediaBox")
 
 	pdf.AddPage()
 

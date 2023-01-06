@@ -26,6 +26,9 @@ func TestMain(m *testing.M) {
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = true
 
+	tmpPath = "/tmp"
+	pathToManual = "./../../pdf"
+
 	testApp = Config{
 		Session:       session,
 		DB:            nil,
@@ -50,11 +53,14 @@ func TestMain(m *testing.M) {
 	}
 
 	go func() {
-		select {
-		case <-testApp.Mailer.MailerChan:
-		case <-testApp.Mailer.ErrorChan:
-		case <-testApp.Mailer.DoneChan:
-			return
+		for {
+			select {
+			case <-testApp.Mailer.MailerChan:
+				testApp.Mailer.Wait.Done()
+			case <-testApp.Mailer.ErrorChan:
+			case <-testApp.Mailer.DoneChan:
+				return
+			}
 		}
 	}()
 

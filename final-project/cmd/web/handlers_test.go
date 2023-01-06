@@ -106,7 +106,7 @@ func TestConfig_PostLoginPage(t *testing.T) {
 		"password": {"password"},
 	}
 
-	rr := httptest.ResponseRecorder{}
+	rr := httptest.NewRecorder()
 
 	req, err := http.NewRequest("POST", "/login", strings.NewReader(postedData.Encode()))
 	if err != nil {
@@ -119,7 +119,7 @@ func TestConfig_PostLoginPage(t *testing.T) {
 
 	handler := http.HandlerFunc(testApp.PostLoginPage)
 
-	handler.ServeHTTP(&rr, req)
+	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusSeeOther {
 		t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, http.StatusSeeOther)
@@ -127,6 +127,37 @@ func TestConfig_PostLoginPage(t *testing.T) {
 
 	if !testApp.Session.Exists(ctx, "userID") {
 		t.Error("Expected session to exist")
+	}
+
+}
+
+func TestConfig_SubscribeToPlan(t *testing.T) {
+
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/subscribe?id=1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := getContext(req)
+	req = req.WithContext(ctx)
+
+	testApp.Session.Put(ctx, "user", data.User{
+		ID:        1,
+		Email:     "admin@example.com",
+		FirstName: "Admin",
+		LastName:  "User",
+		Password:  "password",
+		Active:    1,
+	})
+
+	handler := http.HandlerFunc(testApp.SubscribeToPlan)
+
+	handler.ServeHTTP(rr, req)
+
+	testApp.Wait.Wait()
+
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("handler returned wrong status code: got %v but wants %v", rr.Code, http.StatusSeeOther)
 	}
 
 }
